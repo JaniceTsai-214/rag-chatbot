@@ -16,7 +16,7 @@
 
 | 模組 | 測試重點 |
 |---|---|
-| config / profiles | 讀取設定；情境變數代入；情境指定不存在的文件集時有明確錯誤；選填參數覆寫 |
+| config / profiles | 讀取設定；情境變數代入；情境格式錯誤時有明確錯誤；可列出不存在的文件集；選填參數覆寫 |
 | loaders | 各格式能擷取文字；PDF 頁碼正確；MD/DOCX 標題正確；DOCX 表格轉文字；FAQ 每列一筆；CSV UTF-8 與 Big5；空檔/壞檔有明確錯誤 |
 | chunker | 長度上限、重疊、在句號/段落斷開、短文不切、不跨 Section |
 | embedder | 前綴組合；批次切分（以假 Ollama client 測試） |
