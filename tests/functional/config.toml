@@ -1,0 +1,24 @@
+# 功能測試專用設定（docs/04-testing.md §2）：資料庫、文件集、情境都與正式資料分開
+# 模型與檢索參數應與專案根目錄的 config.toml 保持一致
+
+default_profile = "intro"
+
+[ollama]
+host = "http://127.0.0.1:11434"
+chat_model = "qwen2.5:3b"
+embed_model = "bge-m3"
+timeout_seconds = 300
+
+[paths]
+db = "app.db"
+collections = "collections"
+profiles = "profiles"
+
+[chunking]
+chunk_size = 600
+chunk_overlap = 100
+
+[retrieval]
+top_k = 5
+min_score = 0.45
+history_turns = 2
