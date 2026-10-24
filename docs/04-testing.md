@@ -20,7 +20,7 @@
 | loaders | 各格式能擷取文字；PDF 頁碼正確；MD/DOCX 標題正確；DOCX 表格轉文字；FAQ 每列一筆；CSV UTF-8 與 Big5；空檔/壞檔有明確錯誤 |
 | chunker | 長度上限、重疊、在句號/段落斷開、短文不切、不跨 Section |
 | embedder | 前綴組合；批次切分（以假 Ollama client 測試） |
-| vector_store | 新增/刪除/搜尋；相似度排序正確；搜尋限定文件集；embedding 模型不一致時提示 |
+| db / vector_store | 建立資料表、版本檢查；新增/取代/刪除/清空；寫入失敗時舊資料不變；相似度排序正確；搜尋限定文件集；embedding 模型或維度不一致時拒絕 |
 | ingest | 新檔匯入；相同 hash 跳過；修改後取代舊段落；向量化失敗時舊資料不變；刪除文件不刪原始檔 |
 | cli | 各指令的輸出與錯誤訊息（使用 FakeEmbedder） |
 | retriever | top_k、門檻過濾、全部低於門檻時回傳空 |

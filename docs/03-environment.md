@@ -84,6 +84,7 @@ python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 
 | 相同內容再問（Ollama 快取） | 2.5 秒 |
 | bge-m3 embedding（短句） | 約 0.43 秒/段 |
 | bge-m3 embedding（約 600 字/段，2026-10-25） | 約 0.9 秒/段；每批 1 筆或 16 筆速度相同；1,000 段約 15 分鐘 |
+| 向量搜尋（1 萬段 × 1024 維，2026-10-25） | 約 100 ms（含從 SQLite 讀取）；資料庫約 62 MB |
 
 觀察：
 - 回答內容正確，但模型未照指示標註 `[n]`（→ D-010）。
