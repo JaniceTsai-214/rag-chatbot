@@ -6,6 +6,8 @@ from collections.abc import Sequence
 
 import numpy as np
 
+from rag_chatbot.embedder import EmbedderError, ProgressCallback
+
 DEFAULT_KEYWORDS = (
     "保固", "濾網", "方案", "進階版", "價格",
     "履歷", "工作", "專長", "小算盤", "共用",
@@ -35,13 +37,15 @@ class FakeEmbedder:
     def dim(self) -> int:
         return len(self.keywords) + 1
 
-    def embed(self, texts: Sequence[str]) -> np.ndarray:
+    def embed(self, texts: Sequence[str], progress: ProgressCallback | None = None) -> np.ndarray:
         self.calls.append(list(texts))
         if self.fail_on_call is not None and len(self.calls) == self.fail_on_call:
-            raise RuntimeError("FakeEmbedder 模擬失敗")
+            raise EmbedderError("FakeEmbedder 模擬失敗")
         vectors = np.zeros((len(texts), self.dim), dtype=np.float32)
         for i, text in enumerate(texts):
             for j, keyword in enumerate(self.keywords):
                 vectors[i, j] = text.count(keyword)
             vectors[i, -1] = 0.1
+        if progress:
+            progress(len(texts), len(texts))
         return vectors

@@ -6,6 +6,7 @@ import openpyxl
 import pymupdf
 import pytest
 
+from rag_chatbot.embedder import EmbedderError
 from tests.builders import make_csv, make_docx, make_pdf, make_xlsx
 from tests.fakes import FakeEmbedder
 
@@ -31,7 +32,7 @@ def test_fake_embedder_no_zero_vector():
 def test_fake_embedder_records_calls_and_fails():
     embedder = FakeEmbedder(fail_on_call=2)
     embedder.embed(["a"])
-    with pytest.raises(RuntimeError, match="模擬失敗"):
+    with pytest.raises(EmbedderError, match="模擬失敗"):
         embedder.embed(["b", "c"])
     assert embedder.calls == [["a"], ["b", "c"]]
 
