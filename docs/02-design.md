@@ -61,8 +61,9 @@ rag-chatbot/
 ├─ app.py                   # Streamlit 入口（M4）
 └─ tests/
    ├─ functional/           # 功能測試：獨立設定、情境、文件集（見 04 §2.1）
-   ├─ conftest.py           # 共用 fixture：暫存資料庫、執行時產生的小型測試檔
-   ├─ fakes.py              # FakeEmbedder, FakeLLM
+   ├─ conftest.py           # 共用 fixture
+   ├─ builders.py           # 測試執行時產生小型 PDF/DOCX/CSV/XLSX
+   ├─ fakes.py              # FakeEmbedder, FakeLLM（M3）
    └─ test_*.py
 ```
 

@@ -10,7 +10,7 @@
 - **單元測試不依賴 Ollama**：使用 `tests/fakes.py` 的 `FakeEmbedder`（以關鍵字產生固定向量）與 `FakeLLM`（回傳可預期的文字）。
 - 需要真實 Ollama 的測試標記 `@pytest.mark.ollama`，預設略過，用 `pytest -m ollama` 才執行。
 - 資料庫使用暫存檔（`tmp_path`），測試之間互不影響。
-- 單元測試用的小型 PDF/DOCX/MD/CSV 在測試執行時以程式產生（`conftest.py`），不放二進位檔進 Git。
+- 單元測試用的小型 PDF/DOCX/MD/CSV 在測試執行時以程式產生（`tests/builders.py`），不放二進位檔進 Git。
 
 ### 各模組測試重點
 
