@@ -22,7 +22,7 @@
 | embedder | 前綴組合；批次切分（以假 Ollama client 測試） |
 | db / vector_store | 建立資料表、版本檢查；新增/取代/刪除/清空；寫入失敗時舊資料不變；相似度排序正確；搜尋限定文件集；embedding 模型或維度不一致時拒絕 |
 | ingest | 新檔匯入；相同 hash 跳過；修改後取代舊段落；向量化失敗時舊資料不變；刪除文件不刪原始檔 |
-| cli | 各指令的輸出與錯誤訊息（使用 FakeEmbedder） |
+| cli | 各指令的輸出與錯誤訊息、結束碼、模型變更後 `--rebuild`（使用 FakeEmbedder） |
 | retriever | top_k、門檻過濾、全部低於門檻時回傳空 |
 | prompts | 首次使用時由情境預設 Prompt 建立 v1；新增版本、切換啟用版本；各情境版本互不影響 |
 | history | 建立對話、寫入/讀取訊息、重跑關聯；依情境列出對話 |
