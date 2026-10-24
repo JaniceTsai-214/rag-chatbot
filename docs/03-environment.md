@@ -46,18 +46,30 @@ py -3.13 -m venv .venv
 pip install -e ".[dev]"
 ```
 
-## 4. 常用指令（M2 之後適用）
+## 4. 常用指令
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
-streamlit run app.py                              # 啟動聊天介面
-python -X utf8 -m rag_chatbot.ingest data\inbox   # 命令列匯入資料夾
-pytest                                            # 單元測試
-pytest --cov=rag_chatbot                          # 含覆蓋率
-python -X utf8 -m rag_chatbot.eval eval\questions.csv   # 批次評估
+
+# 命令列工具（M2 起；完整說明見 02 §4.4）
+python -X utf8 -m rag_chatbot profiles                      # 列出情境
+python -X utf8 -m rag_chatbot ingest                        # 匯入 data\collections\ 下全部文件集
+python -X utf8 -m rag_chatbot list                          # 列出已匯入文件
+python -X utf8 -m rag_chatbot search "問題" --profile intro  # 檢視檢索結果與分數
+python -X utf8 -m rag_chatbot delete me 履歷.docx            # 刪除文件
+python -X utf8 -m rag_chatbot ask "問題" --profile intro     # 提問（M3 起）
+
+# 測試
+pytest                                                      # 單元測試
+pytest --cov=rag_chatbot                                    # 含覆蓋率
+
+streamlit run app.py                                        # 管理介面（M4 起）
+python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 起）
 ```
 
 > Windows 主控台預設 Big5（cp950），命令列輸出中文需加 `-X utf8`。
+
+**放置文件**：把文件放進 `data\collections\<文件集>\`（例如 `data\collections\me\`），再執行 `ingest`。文件集內容視為可公開（N-06）。
 
 ## 5. 效能實測（2026-10-24）
 

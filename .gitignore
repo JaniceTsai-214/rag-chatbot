@@ -8,8 +8,9 @@ htmlcov/
 
 # 本機資料（文件與資料庫不進版本控制）
 data/app.db
-data/inbox/*
-!data/inbox/.gitkeep
+data/collections/*
+!data/collections/.gitkeep
+tests/functional/app.db
 eval/reports/
 
 .env
