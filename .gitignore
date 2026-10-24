@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 本機資料（文件與資料庫不進版本控制）
+data/app.db
+data/inbox/*
+!data/inbox/.gitkeep
+eval/reports/
+
+.env

@@ -1,0 +1,23 @@
+# rag-chatbot 設定檔（決策見 docs/00-main.md）
+
+[ollama]
+host = "http://127.0.0.1:11434"
+chat_model = "qwen2.5:3b"        # D-003；品質比較可改 qwen2.5:7b
+embed_model = "bge-m3"           # D-004
+timeout_seconds = 300
+
+[paths]
+db = "data/app.db"
+inbox = "data/inbox"
+
+[chunking]
+chunk_size = 600
+chunk_overlap = 100
+
+[retrieval]
+top_k = 5
+min_score = 0.45                 # 低於此分數視為不相關，實測後調整
+history_turns = 2                # 多輪對話時納入檢索的前文輪數（Q-05）
+
+[answer]
+refusal_text = "目前的資料中找不到相關資訊。"   # Q-06（D-012 修訂）
