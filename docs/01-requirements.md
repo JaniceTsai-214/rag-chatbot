@@ -52,7 +52,7 @@
 | 文件規模 | < 100 份、< 2,000 頁 |
 | 文件語言 | 繁體中文為主，夾雜英文 |
 | PDF 類型 | 含文字層（非掃描） |
-| FAQ 格式 | CSV / Excel，欄位 `question`、`answer`（可選 `category`）；CSV 支援 UTF-8 與 Big5 |
+| FAQ 格式 | CSV / Excel（第一個工作表），第一列為欄位名稱：`question`、`answer`（可選 `category`），也可用「問題」「答案」「分類」；CSV 支援 UTF-8 與 Big5 |
 | 多輪對話 | 追問時把最近 2 輪對話與新問題合併後再檢索 |
 | 拒答文字 | 情境設定，預設「這部分目前沒有相關資料，歡迎來信 {contact} 詢問。」 |
 | 聯絡方式 | 情境設定，預設 `tsaichiahui@gmail.com` |
