@@ -20,5 +20,5 @@ chunk_overlap = 100
 
 [retrieval]
 top_k = 5
-min_score = 0.45                 # 低於此分數視為不相關，M2 以 search 實測後調整
+min_score = 0.40                 # 只擋明顯無關的問題（D-022）；調整方式見 docs/03-environment.md §6
 history_turns = 2                # 多輪對話時納入檢索的前文輪數

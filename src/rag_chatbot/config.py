@@ -39,7 +39,7 @@ class ChunkingConfig:
 @dataclass(frozen=True)
 class RetrievalConfig:
     top_k: int = 5
-    min_score: float = 0.45
+    min_score: float = 0.40
     history_turns: int = 2
 
 

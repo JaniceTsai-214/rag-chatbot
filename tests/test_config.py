@@ -12,7 +12,7 @@ def test_load_project_config():
     assert config.ollama.chat_model == "qwen2.5:3b"
     assert config.ollama.embed_model == "bge-m3"
     assert config.chunking.chunk_size == 600
-    assert config.retrieval.min_score == 0.45
+    assert config.retrieval.min_score == 0.40
     assert config.paths.collections == PROJECT_ROOT / "data" / "collections"
 
 

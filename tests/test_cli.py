@@ -110,7 +110,7 @@ def test_search(run, docs):
     run("ingest")
     code, out, _ = run("search", "進階版價格", "--top-k", "2")
     assert code == 0
-    assert "情境 intro（文件集：me, product），門檻 0.45" in out
+    assert "情境 intro（文件集：me, product），門檻 0.40" in out
     lines = out.splitlines()
     assert lines[1].startswith("1. ") and "product/手冊.md [方案]" in lines[1]
     assert lines[2].strip() == "進階版價格每月 60 元。"
