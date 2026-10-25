@@ -37,11 +37,22 @@ class Source:
     score: float
 
 
+ANSWERED = "answered"  # 回答
+REFUSED = "refused"  # 拒答（門檻擋下，或模型判斷文件中沒有答案）
+GREETING = "greeting"  # 問候、閒聊、套話的固定回覆
+
+
 @dataclass(frozen=True)
 class Answer:
+    kind: str
     text: str
-    sources: list[Source]
-    refused: bool  # 是否因檢索不到而拒答
-    model: str
-    prompt_version: int
+    sources: list[Source]  # 送給模型的段落；門檻拒答與問候時為空
+    model: str | None  # 未呼叫 LLM 時為 None
+    prompt_version: int | None
     latency_ms: int
+    conversation_id: int
+    top_score: float | None = None  # 語意分數最高值；問候時為 None
+
+    @property
+    def refused(self) -> bool:
+        return self.kind == REFUSED
