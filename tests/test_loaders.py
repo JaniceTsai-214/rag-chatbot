@@ -212,6 +212,12 @@ def test_faq_chinese_headers_and_column_order(tmp_path):
     assert load(path) == [Section(text="問：要錢嗎？\n答：免費。", heading=None)]
 
 
+def test_faq_extra_columns_ignored(tmp_path):
+    rows = [["分類", "問題", "問題發想原因", "回答"], ["領導", "團隊多大？", "內部備註，不應匯入", "約 40 人。"]]
+    path = make_csv(tmp_path / "faq.csv", rows)
+    assert load(path) == [Section(text="問：團隊多大？\n答：約 40 人。", heading="領導")]
+
+
 def test_faq_xlsx_numbers(tmp_path):
     path = tmp_path / "faq.xlsx"
     make_xlsx(path, [["Question", "Answer"], ["進階版多少錢？", 60]])

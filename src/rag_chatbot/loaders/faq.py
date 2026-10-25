@@ -15,7 +15,7 @@ from rag_chatbot.models import Section
 # 欄位名稱（不分大小寫）→ 標準欄位
 _COLUMNS = {
     "question": "question", "問題": "question",
-    "answer": "answer", "答案": "answer",
+    "answer": "answer", "答案": "answer", "回答": "answer",
     "category": "category", "分類": "category",
 }
 
