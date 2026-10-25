@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -63,10 +63,21 @@ CREATE TABLE IF NOT EXISTS messages (
     sources_json    TEXT,
     latency_ms      INTEGER,
     created_at      TEXT NOT NULL,
-    rerun_of        INTEGER REFERENCES messages(id) ON DELETE SET NULL
+    rerun_of        INTEGER REFERENCES messages(id) ON DELETE SET NULL,
+    kind            TEXT,
+    top_score       REAL
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
 """
+
+
+# 舊版本 → 升級到下一版的 SQL
+_MIGRATIONS = {
+    "1": (
+        "ALTER TABLE messages ADD COLUMN kind TEXT",
+        "ALTER TABLE messages ADD COLUMN top_score REAL",
+    ),
+}
 
 
 class DatabaseError(Exception):
@@ -85,6 +96,12 @@ def connect(path: str | Path) -> sqlite3.Connection:
         conn.executescript(_SCHEMA)
         conn.execute("INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
     version = get_meta(conn, "schema_version")
+    while version in _MIGRATIONS:
+        with conn:
+            for statement in _MIGRATIONS[version]:
+                conn.execute(statement)
+            version = str(int(version) + 1)
+            set_meta(conn, "schema_version", version)
     if version != SCHEMA_VERSION:
         conn.close()
         raise DatabaseError(f"資料庫版本 {version} 與程式版本 {SCHEMA_VERSION} 不符：{path}")
