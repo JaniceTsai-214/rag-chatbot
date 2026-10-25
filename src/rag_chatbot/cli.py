@@ -13,15 +13,26 @@ from collections.abc import Callable, Sequence
 from rag_chatbot.config import DEFAULT_CONFIG_PATH, Config, ConfigError, load_config
 from rag_chatbot.db import DatabaseError, connect
 from rag_chatbot.embedder import Embedder, EmbedderError, OllamaEmbedder
+from rag_chatbot.history import HistoryError
 from rag_chatbot.ingest import FileResult, IngestError, Status, ingest_collections, list_collections
+from rag_chatbot.llm import LLM, LLMError, OllamaLLM
+from rag_chatbot.models import ANSWERED, GREETING, REFUSED, Answer
 from rag_chatbot.profiles import ProfileError, list_profiles, load_profile
+from rag_chatbot.prompts import PromptError
+from rag_chatbot.rag import RagService, source_label
 from rag_chatbot.retriever import Retriever
 from rag_chatbot.vector_store import VectorStore, VectorStoreError
 
 EmbedderFactory = Callable[[Config], Embedder]
+LLMFactory = Callable[[Config], LLM]
 
 _PREVIEW_CHARS = 80
-_EXPECTED_ERRORS = (ConfigError, ProfileError, DatabaseError, IngestError, EmbedderError, VectorStoreError)
+_EXPECTED_ERRORS = (
+    ConfigError, ProfileError, DatabaseError, IngestError, EmbedderError, VectorStoreError,
+    LLMError, HistoryError, PromptError,
+)
+_KIND_LABELS = {ANSWERED: "回答", REFUSED: "拒答", GREETING: "問候"}
+_QUIT_WORDS = {"exit", "quit", "q", "離開", "結束"}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -46,10 +57,24 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("delete", help="從資料庫刪除文件（不刪原始檔）")
     p.add_argument("collection", help="文件集名稱")
     p.add_argument("filename", help="檔名")
+
+    p = sub.add_parser("ask", help="回答一個問題，列出依據")
+    p.add_argument("question", help="問題")
+    p.add_argument("--profile", help="情境名稱（預設為設定檔中的 default_profile）")
+    p.add_argument("--conversation", type=int, help="接續指定的對話編號（多輪追問）")
+    p.add_argument("--prompt-version", type=int, help="使用指定的 Prompt 版本（預設為啟用中的版本）")
+
+    p = sub.add_parser("chat", help="互動式對話（連續追問，輸入 exit 離開）")
+    p.add_argument("--profile", help="情境名稱（預設為設定檔中的 default_profile）")
+    p.add_argument("--sources", action="store_true", help="每則回答後列出依據")
     return parser
 
 
-def main(argv: Sequence[str] | None = None, embedder_factory: EmbedderFactory | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    embedder_factory: EmbedderFactory | None = None,
+    llm_factory: LLMFactory | None = None,
+) -> int:
     # 主控台不是 UTF-8 時，無法顯示的字元以 ? 代替，避免整個指令失敗
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -57,6 +82,7 @@ def main(argv: Sequence[str] | None = None, embedder_factory: EmbedderFactory | 
 
     args = build_parser().parse_args(argv)
     factory = embedder_factory or OllamaEmbedder.from_config
+    make_llm = llm_factory or OllamaLLM.from_config
     try:
         config = load_config(args.config)
         if args.command == "profiles":
@@ -70,7 +96,12 @@ def main(argv: Sequence[str] | None = None, embedder_factory: EmbedderFactory | 
                 return _cmd_list(config, store, args.collection)
             if args.command == "search":
                 return _cmd_search(config, store, factory(config), args.question, args.profile, args.top_k)
-            return _cmd_delete(store, args.collection, args.filename)
+            if args.command == "delete":
+                return _cmd_delete(store, args.collection, args.filename)
+            service = RagService(config, store, factory(config), make_llm(config))
+            if args.command == "ask":
+                return _cmd_ask(service, args.question, args.profile, args.conversation, args.prompt_version)
+            return _cmd_chat(service, args.profile, args.sources)
         finally:
             conn.close()
     except _EXPECTED_ERRORS as e:
@@ -176,6 +207,61 @@ def _cmd_delete(store: VectorStore, collection: str, filename: str) -> int:
         return 0
     print(f"錯誤：資料庫中沒有 {collection}/{filename}", file=sys.stderr)
     return 1
+
+
+def _cmd_ask(
+    service: RagService,
+    question: str,
+    profile: str | None,
+    conversation_id: int | None,
+    prompt_version: int | None,
+) -> int:
+    if not question.strip():
+        print("錯誤：問題不可為空白", file=sys.stderr)
+        return 1
+    answer = service.answer(question, profile, conversation_id, prompt_version)
+    _print_answer(answer, with_sources=True)
+    print(f"（對話 #{answer.conversation_id}；接續追問請加 --conversation {answer.conversation_id}）")
+    return 0
+
+
+def _cmd_chat(service: RagService, profile: str | None, with_sources: bool) -> int:
+    p = load_profile(service.config, profile)
+    print(f"情境 {p.name}：{p.title}。輸入問題後按 Enter；輸入 exit 或直接按 Enter 離開。")
+    conversation_id = None
+    while True:
+        try:
+            question = input("\n您：").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+        if not question or question.lower() in _QUIT_WORDS:
+            break
+        print("（思考中…）", flush=True)
+        try:
+            answer = service.answer(question, p.name, conversation_id)
+        except (EmbedderError, LLMError) as e:
+            print(f"錯誤：{e}", file=sys.stderr)
+            continue
+        conversation_id = answer.conversation_id
+        _print_answer(answer, with_sources)
+    if conversation_id is not None:
+        print(f"對話已保存（#{conversation_id}）")
+    return 0
+
+
+def _print_answer(answer: Answer, with_sources: bool) -> None:
+    info = [_KIND_LABELS.get(answer.kind, answer.kind), f"{answer.latency_ms / 1000:.1f} 秒"]
+    if answer.prompt_version is not None:
+        info.append(f"Prompt v{answer.prompt_version}")
+    if answer.top_score is not None:
+        info.append(f"語意最高分 {answer.top_score:.3f}")
+    print(f"[{'｜'.join(info)}]")
+    print(answer.text)
+    if with_sources and answer.sources:
+        print("\n回答依據：")
+        for i, s in enumerate(answer.sources, start=1):
+            print(f"  [{i}] {s.score:.3f}  {s.collection}/{source_label(s)}")
 
 
 def _warn_model_mismatch(store: VectorStore) -> None:

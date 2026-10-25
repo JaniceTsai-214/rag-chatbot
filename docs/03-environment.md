@@ -57,7 +57,8 @@ python -X utf8 -m rag_chatbot ingest                        # 匯入 data\collec
 python -X utf8 -m rag_chatbot list                          # 列出已匯入文件
 python -X utf8 -m rag_chatbot search "問題" --profile intro  # 檢視檢索結果與分數
 python -X utf8 -m rag_chatbot delete me 履歷.docx            # 刪除文件
-python -X utf8 -m rag_chatbot ask "問題" --profile intro     # 提問（M3 起）
+python -X utf8 -m rag_chatbot ask "問題" --profile intro     # 提問一題（M3 起）
+python -X utf8 -m rag_chatbot chat --sources                # 互動式連續提問（M3 起）
 
 # 測試
 pytest                                                      # 單元測試
@@ -91,7 +92,46 @@ python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 
 - 回答內容正確，但模型未照指示標註 `[n]`（→ D-010）。
 - CPU 上分批送出不會加速；`OllamaEmbedder` 仍每批 16 筆，用於回報匯入進度。
 
-## 6. 調整拒答門檻
+## 6. 提問測試（命令列，M3 起；網頁介面於 M4 提供）
+
+**事前準備**：Ollama 在執行中（工作列有 Ollama 圖示；或執行 `ollama list` 有回應）、筆電接上電源。
+
+```powershell
+cd C:\projects
+ag-chatbot
+.\.venv\Scripts\Activate.ps1
+
+# 方式一：互動式對話（建議）——同一個對話中連續追問
+python -X utf8 -m rag_chatbot chat --sources
+#   您：她管理過多大的團隊？
+#   [回答｜18.2 秒｜Prompt v1｜語意最高分 0.641]
+#   ……回答內容……
+#   回答依據：
+#     [1] 0.641  me/常見問題_進階 > 高階主管能力與組織領導
+#   您：exit            ← 輸入 exit 或直接按 Enter 離開
+
+# 方式二：一次問一題
+python -X utf8 -m rag_chatbot ask "智慧訂單可以接哪些 ERP？"
+python -X utf8 -m rag_chatbot ask "那導入要多久？" --conversation 3   # 接續對話 #3 追問
+
+# 指定情境（預設 intro）
+python -X utf8 -m rag_chatbot chat --profile me
+```
+
+**看懂回答開頭的標示**
+
+| 標示 | 意思 |
+|---|---|
+| `回答` | 模型依文件回答 |
+| `拒答` | 文件中沒有答案（秒回 = 門檻擋下；十幾秒以上 = 模型判斷） |
+| `問候` | 問候、道謝、道別、套話的固定回覆（不呼叫模型） |
+| `語意最高分` | 問題與最相關段落的分數，用於調整門檻（§7） |
+
+**測試時建議記錄**：答錯（內容與文件不符）、不該拒答卻拒答、該拒答卻回答、回答超過 60 秒的題目，連同畫面上的標示一起記下，供調整 Prompt、門檻或補充 FAQ。所有問答也都保存在資料庫的對話紀錄中。
+
+**修改文件後**：執行 `python -X utf8 -m rag_chatbot ingest` 重新匯入，不需重新啟動任何程式。
+
+## 7. 調整拒答門檻
 
 `min_score`（預設 0.40）：問題與最相關段落的語意分數（0～1）低於此值時，直接回拒答文字、不呼叫 LLM。它只負責擋掉明顯無關的問題；其餘能否回答由 LLM 判斷（D-022）。
 
@@ -107,7 +147,7 @@ python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 
 **調整步驟**
 
 1. 收集「應該回答」與「應該拒答」的問題各數題。
-2. 以 `python -X utf8 -m rag_chatbot search "問題"` 查看每題第 1 名的分數（M4 起管理介面也會顯示）。
+2. 以 `python -X utf8 -m rag_chatbot search "問題"` 查看每題第 1 名的分數（`ask`／`chat` 的回答開頭也會顯示；M4 起管理介面也會顯示）。
 3. 把門檻設在兩組分數之間：修改 `config.toml` 的 `[retrieval] min_score`；只想調整某個情境時，在 `profiles/<情境>.toml` 加 `min_score = 0.42`。不需改程式、不需重新匯入。
 4. 驗證：重跑這些問題（M6 起可用批次評估整批重跑），確認沒有讓其他題目變差。
 5. 在 [04 §4](04-testing.md#4-執行紀錄) 記錄調整前後的分數與理由。

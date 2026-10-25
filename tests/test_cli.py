@@ -2,16 +2,17 @@ import pytest
 
 from rag_chatbot.cli import main
 from rag_chatbot.embedder import EmbedderError
-from tests.fakes import FakeEmbedder
+from tests.fakes import FakeEmbedder, FakeLLM
 
 
 @pytest.fixture
 def run(project, tmp_path, capsys):
-    """執行 CLI，回傳 (結束碼, stdout, stderr)。預設使用 FakeEmbedder。"""
+    """執行 CLI，回傳 (結束碼, stdout, stderr)。預設使用 FakeEmbedder 與 FakeLLM。"""
 
-    def _run(*args, embedder=None):
+    def _run(*args, embedder=None, llm=None):
         embedder = embedder or FakeEmbedder(model=project.ollama.embed_model)
-        code = main(["--config", str(tmp_path / "config.toml"), *args], lambda config: embedder)
+        llm = llm or FakeLLM("進階版每月 60 元 [1]。")
+        code = main(["--config", str(tmp_path / "config.toml"), *args], lambda config: embedder, lambda config: llm)
         out, err = capsys.readouterr()
         return code, out, err
 
@@ -193,3 +194,74 @@ def test_embedder_error_class_is_reported(run, docs):
     run("ingest")
     code, _, err = run("search", "x", embedder=Broken(model="bge-m3"))
     assert code == 1 and "錯誤：無法連線到 Ollama" in err
+
+
+# ---------- ask / chat ----------
+
+def test_ask(run, docs):
+    run("ingest")
+    code, out, _ = run("ask", "進階版價格多少？")
+    assert code == 0
+    lines = out.splitlines()
+    assert lines[0].startswith("[回答｜") and "Prompt v1" in lines[0] and "語意最高分" in lines[0]
+    assert lines[1] == "進階版每月 60 元 [1]。"
+    assert "回答依據：" in out and "product/手冊 > 方案" in out
+    assert "（對話 #1；接續追問請加 --conversation 1）" in out
+
+    code, out, _ = run("ask", "那共用呢？", "--conversation", "1")
+    assert code == 0 and "對話 #1" in out
+
+
+def test_ask_refusal_and_greeting(run, docs):
+    run("ingest")
+    llm = FakeLLM()
+    _, out, _ = run("ask", "明天天氣？", llm=llm)
+    assert out.startswith("[拒答｜") and "沒有資料，請洽 test@example.com。" in out
+    assert "回答依據" not in out and llm.calls == []
+    _, out, _ = run("ask", "你好")
+    assert out.startswith("[問候｜") and "語意最高分" not in out
+
+
+def test_ask_errors(run, docs):
+    run("ingest")
+    code, _, err = run("ask", "   ")
+    assert code == 1 and "問題不可為空白" in err
+    code, _, err = run("ask", "進階版價格", "--conversation", "99")
+    assert code == 1 and "對話 99 不存在" in err
+    code, _, err = run("ask", "進階版價格", "--prompt-version", "9")
+    assert code == 1 and "沒有 Prompt v9" in err
+    code, _, err = run("ask", "進階版價格", llm=FakeLLM(fail=True))
+    assert code == 1 and "錯誤：FakeLLM 模擬失敗" in err
+
+
+def test_chat_session(run, docs, monkeypatch):
+    run("ingest")
+    inputs = iter(["你好", "進階版價格", "", "不會讀到這裡"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+    code, out, _ = run("chat", "--sources")
+    assert code == 0
+    assert out.startswith("情境 intro：介紹助理。")
+    assert "[問候｜" in out and "[回答｜" in out and "回答依據：" in out
+    assert out.rstrip().endswith("對話已保存（#1）")
+
+
+def test_chat_quit_words_and_eof(run, docs, monkeypatch):
+    for ending in (["exit"], ["離開"]):
+        inputs = iter(ending)
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+        code, out, _ = run("chat")
+        assert code == 0 and "對話已保存" not in out
+
+    def eof(prompt=""):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", eof)
+    assert run("chat")[0] == 0
+
+
+def test_chat_keeps_going_after_llm_error(run, docs, monkeypatch):
+    run("ingest")
+    inputs = iter(["進階版價格", "q"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+    code, _, err = run("chat", llm=FakeLLM(fail=True))
+    assert code == 0 and "錯誤：FakeLLM 模擬失敗" in err

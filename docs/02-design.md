@@ -129,7 +129,7 @@ system_prompt = """..."""                # 預設 Prompt（見 §8），首次�
    - 關鍵字分數：BM25；斷詞方式為英數字依單字、中文取相鄰兩字（bigram）；計算範圍含標題與內文。
    - 兩者各自排名後以 RRF（k = 60）合併，取前 top_k（預設 5）。
    - 關鍵字索引在記憶體中建立；資料庫 `meta.chunks_version` 在每次新增、取代、刪除、清空時加 1，版本改變時自動重建（其他程序寫入也能察覺）。
-5. **門檻（D-022）**：語意分數的最高值低於 `min_score`（預設 0.40）→ 直接回情境的拒答文字，不呼叫 LLM。門檻只擋明顯無關的問題；其餘是否能回答，由 LLM 依 Prompt 判斷。調整方式見 [03 §6](03-environment.md#6-調整拒答門檻)。
+5. **門檻（D-022）**：語意分數的最高值低於 `min_score`（預設 0.40）→ 直接回情境的拒答文字，不呼叫 LLM。門檻只擋明顯無關的問題；其餘是否能回答，由 LLM 依 Prompt 判斷。調整方式見 [03 §7](03-environment.md#7-調整拒答門檻)。
 6. **參考資料長度上限（D-024）**：依排名順序加入段落，總字數不超過 `max_context_chars`（預設 1,800）；第 1 段超過上限時截斷。
 7. 組 Prompt：
    - system：情境 Prompt（目前版本，代入變數）。
@@ -157,8 +157,10 @@ python -X utf8 -m rag_chatbot [--config 設定檔] <指令>
   search "問題" [--profile 情境] [--top-k N]
                                     顯示最相關段落：分數、文件集、檔名、頁碼/標題、前 80 字；標示低於門檻者
   delete <文件集> <檔名>             從資料庫刪除文件
-  ask "問題" [--profile 情境]        （M3）回答問題，列出依據、類型（回答／拒答／問候）與耗時；
-                                    每次 ask 建立一個新對話並寫入對話紀錄
+  ask "問題" [--profile 情境] [--conversation 編號] [--prompt-version N]
+                                    （M3）回答問題，列出類型（回答／拒答／問候）、耗時、Prompt 版本、
+                                    語意最高分與依據；未指定 --conversation 時建立新對話
+  chat [--profile 情境] [--sources]  （M3）互動式對話：同一對話中連續追問；exit 或空白行離開
 ```
 
 - `--config` 預設為 `config.toml`；功能測試使用 `tests/functional/config.toml`，與正式資料完全分開。
