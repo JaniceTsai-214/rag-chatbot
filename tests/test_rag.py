@@ -239,3 +239,10 @@ def test_invalid_input(setup):
     other = service.answer("進階版價格", "me")
     with pytest.raises(HistoryError, match="屬於情境「me」"):
         service.answer("進階版價格", "intro", conversation_id=other.conversation_id)
+
+
+def test_postprocess_converts_simplified():
+    assert postprocess("根据资料，支持 SAP [1]。", REFUSAL) == (ANSWERED, "根據資料，支持 SAP [1]。")
+    # 簡體版的拒答句也能辨識
+    simplified_refusal = "这部分目前没有相关资料，欢迎来信 a@b.com 询问。"
+    assert postprocess(simplified_refusal, LONG_REFUSAL) == (REFUSED, LONG_REFUSAL)

@@ -19,6 +19,7 @@ from rag_chatbot.prompts import PromptStore
 from rag_chatbot.retriever import Retriever
 from rag_chatbot.smalltalk import SmallTalk, classify
 from rag_chatbot.vector_store import VectorStore
+from rag_chatbot.zh_convert import to_traditional
 
 ERROR = "error"  # 只用於對話紀錄：呼叫 Ollama 失敗
 
@@ -147,8 +148,9 @@ def postprocess(raw: str, refusal_text: str) -> tuple[str, str]:
     - 只有拒答句，或回答一開頭就是拒答句（模型常改寫後半句再接著發揮）→ 拒答，改回標準拒答文字。
     - 有內容又附上拒答句 → 刪除該句。
     拒答句以完整文字比對，也以開頭片段（第一個「，」或「。」之前）比對改寫過的版本。
+    處理前先把含簡體字的句子轉成繁體（D-027）。
     """
-    text = raw.strip()
+    text = to_traditional(raw.strip())
     text = text.replace(f"「{refusal_text}」", refusal_text)
     core = _refusal_core(refusal_text)
     position = text.find(core)
