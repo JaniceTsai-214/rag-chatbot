@@ -8,6 +8,10 @@ host = "http://127.0.0.1:11434"
 chat_model = "qwen2.5:3b"        # D-003；品質比較可改 qwen2.5:7b
 embed_model = "bge-m3"           # D-004
 timeout_seconds = 300
+chat_num_ctx = 4096              # 模型的上下文長度（tokens）
+chat_max_tokens = 300            # 回答最多 tokens（D-024）
+chat_temperature = 0.2           # 越低越保守
+keep_alive = "30m"               # 模型保持載入的時間，避免每次重新載入
 
 [paths]                          # 相對路徑以本設定檔所在資料夾為準
 db = "data/app.db"

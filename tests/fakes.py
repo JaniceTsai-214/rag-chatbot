@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 import numpy as np
 
 from rag_chatbot.embedder import EmbedderError, ProgressCallback
+from rag_chatbot.llm import LLMError, Message
 
 DEFAULT_KEYWORDS = (
     "保固", "濾網", "方案", "進階版", "價格",
@@ -49,3 +50,24 @@ class FakeEmbedder:
         if progress:
             progress(len(texts), len(texts))
         return vectors
+
+
+class FakeLLM:
+    """回傳固定文字，或依訊息內容產生回答；記錄每次呼叫的訊息。"""
+
+    def __init__(
+        self,
+        reply: str | Callable[[Sequence[Message]], str] = "這是測試回答 [1]。",
+        model: str = "fake-llm",
+        fail: bool = False,
+    ) -> None:
+        self.reply = reply
+        self.model = model
+        self.fail = fail
+        self.calls: list[list[dict[str, str]]] = []
+
+    def chat(self, messages: Sequence[Message]) -> str:
+        self.calls.append([dict(m) for m in messages])
+        if self.fail:
+            raise LLMError("FakeLLM 模擬失敗")
+        return self.reply(messages) if callable(self.reply) else self.reply

@@ -6,11 +6,11 @@ from collections.abc import Callable, Sequence
 from pathlib import PurePath
 from typing import Any, Protocol
 
-import httpx
 import numpy as np
 import ollama
 
 from rag_chatbot.config import Config
+from rag_chatbot.ollama_errors import translate_errors
 
 # progress(已完成數, 總數)
 ProgressCallback = Callable[[int, int], None]
@@ -68,18 +68,8 @@ class OllamaEmbedder:
         return np.vstack(vectors)
 
     def _embed_batch(self, batch: list[str]) -> np.ndarray:
-        try:
+        with translate_errors(EmbedderError, self.host, self.model, "向量化"):
             response = self._client.embed(model=self.model, input=batch)
-        except ConnectionError as e:
-            raise EmbedderError(f"無法連線到 Ollama（{self.host}），請確認 Ollama 已啟動") from e
-        except httpx.TimeoutException as e:
-            raise EmbedderError(f"Ollama 回應逾時（{self.host}）") from e
-        except ollama.ResponseError as e:
-            if e.status_code == 404:
-                raise EmbedderError(
-                    f"Ollama 找不到模型 {self.model}，請先執行：ollama pull {self.model}"
-                ) from e
-            raise EmbedderError(f"Ollama 向量化失敗：{e.error}") from e
 
         result = np.asarray(response.embeddings, dtype=np.float32)
         if result.ndim != 2 or result.shape[0] != len(batch):

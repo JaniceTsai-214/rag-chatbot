@@ -61,6 +61,10 @@ def test_missing_file(tmp_path: Path):
         ("[retrieval]\nmin_score = 1.5\n", "min_score"),
         ("[retrieval]\nhistory_turns = -1\n", "history_turns"),
         ("[ollama]\ntimeout_seconds = 0\n", "timeout_seconds"),
+        ("[ollama]\nchat_num_ctx = 0\n", "chat_num_ctx"),
+        ("[ollama]\nchat_max_tokens = -1\n", "chat_max_tokens"),
+        ("[ollama]\nchat_temperature = 3\n", "chat_temperature"),
+        ("[ollama]\nkeep_alive = 30\n", "型別錯誤"),
     ],
 )
 def test_invalid_config(write_file, content, message):

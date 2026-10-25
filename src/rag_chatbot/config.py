@@ -21,6 +21,10 @@ class OllamaConfig:
     chat_model: str = "qwen2.5:3b"
     embed_model: str = "bge-m3"
     timeout_seconds: int = 300
+    chat_num_ctx: int = 4096
+    chat_max_tokens: int = 300
+    chat_temperature: float = 0.2
+    keep_alive: str = "30m"
 
 
 @dataclass(frozen=True)
@@ -126,5 +130,10 @@ def _validate(config: Config) -> None:
         raise ConfigError("[retrieval] min_score 必須介於 0 與 1 之間")
     if r.history_turns < 0:
         raise ConfigError("[retrieval] history_turns 不可為負數")
-    if config.ollama.timeout_seconds <= 0:
+    o = config.ollama
+    if o.timeout_seconds <= 0:
         raise ConfigError("[ollama] timeout_seconds 必須大於 0")
+    if o.chat_num_ctx <= 0 or o.chat_max_tokens <= 0:
+        raise ConfigError("[ollama] chat_num_ctx、chat_max_tokens 必須大於 0")
+    if not 0.0 <= o.chat_temperature <= 2.0:
+        raise ConfigError("[ollama] chat_temperature 必須介於 0 與 2 之間")
