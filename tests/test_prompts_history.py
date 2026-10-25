@@ -23,7 +23,7 @@ def profiles(project):
 
 # ---------- 資料庫升級 ----------
 
-def test_migrate_v1_to_v2(tmp_path):
+def test_migrate_v1_to_latest(tmp_path):
     path = tmp_path / "old.db"
     old = sqlite3.connect(path)
     old.executescript("""
@@ -41,7 +41,8 @@ def test_migrate_v1_to_v2(tmp_path):
     old.close()
 
     conn = connect(path)
-    assert get_meta(conn, "schema_version") == "2"
+    assert get_meta(conn, "schema_version") == "3"
+    assert conn.execute("SELECT COUNT(*) FROM line_users").fetchone()[0] == 0
     columns = {r[1] for r in conn.execute("PRAGMA table_info(messages)")}
     assert {"kind", "top_score"} <= columns
     message = HistoryStore(conn).messages(1)[0]

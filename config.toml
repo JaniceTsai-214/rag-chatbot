@@ -27,3 +27,13 @@ top_k = 5
 min_score = 0.40                 # 只擋明顯無關的問題（D-022）；調整方式見 docs/03-environment.md §6
 history_turns = 2                # 多輪對話時納入檢索的前文輪數
 max_context_chars = 1800         # 送給 LLM 的參考資料總字數上限（D-024）
+
+[line]                           # LINE 串接（docs/05-line.md）；金鑰放在 .env
+profile = "intro"                # 使用的情境
+port = 8000
+reply_deadline_seconds = 50      # 超過改用 push 補送
+conversation_idle_minutes = 30   # 閒置多久開始新對話
+rate_limit_count = 10            # 每位訪客在 rate_limit_minutes 內最多幾題
+rate_limit_minutes = 10
+max_queue = 3                    # 等待中的問題上限
+cloudflared_path = ""            # 空白表示自動尋找

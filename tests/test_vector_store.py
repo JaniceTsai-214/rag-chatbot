@@ -36,8 +36,8 @@ def _add(store, embedder, collection, filename, texts, sha="h1", file_type="mark
 def test_connect_creates_file_and_tables(db_path):
     conn = connect(db_path)
     tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-    assert {"meta", "documents", "chunks", "prompts", "conversations", "messages"} <= tables
-    assert get_meta(conn, "schema_version") == "2"
+    assert {"meta", "documents", "chunks", "prompts", "conversations", "messages", "line_users"} <= tables
+    assert get_meta(conn, "schema_version") == "3"
     conn.close()
     assert db_path.is_file()
     connect(db_path).close()  # 再次開啟不會出錯

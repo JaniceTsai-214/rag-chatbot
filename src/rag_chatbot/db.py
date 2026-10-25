@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (
@@ -68,6 +68,12 @@ CREATE TABLE IF NOT EXISTS messages (
     top_score       REAL
 );
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
+
+CREATE TABLE IF NOT EXISTS line_users (
+    user_id         TEXT PRIMARY KEY,
+    conversation_id INTEGER REFERENCES conversations(id) ON DELETE SET NULL,
+    last_active_at  TEXT NOT NULL
+);
 """
 
 
@@ -76,6 +82,11 @@ _MIGRATIONS = {
     "1": (
         "ALTER TABLE messages ADD COLUMN kind TEXT",
         "ALTER TABLE messages ADD COLUMN top_score REAL",
+    ),
+    "2": (
+        "CREATE TABLE IF NOT EXISTS line_users (user_id TEXT PRIMARY KEY,"
+        " conversation_id INTEGER REFERENCES conversations(id) ON DELETE SET NULL,"
+        " last_active_at TEXT NOT NULL)",
     ),
 }
 

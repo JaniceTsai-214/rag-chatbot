@@ -43,6 +43,7 @@ rag-chatbot/
 ├─ src/rag_chatbot/
 │  ├─ __main__.py           # python -m rag_chatbot → cli
 │  ├─ cli.py                # 命令列工具
+│  ├─ env.py                # 讀取 .env（LINE 金鑰）
 │  ├─ config.py             # 讀取 config.toml
 │  ├─ profiles.py           # 讀取情境設定、代入變數
 │  ├─ models.py             # 資料類別：Section, Chunk, Source, Answer 等
@@ -60,6 +61,7 @@ rag-chatbot/
 │  ├─ prompts.py            # Prompt 版本管理（M3）
 │  ├─ history.py            # 對話紀錄（M3）
 │  ├─ rag.py                # answer() 核心（M3）
+│  ├─ line/                 # LINE 串接（M4，見 05）：signature、api、users、handler、app、runner
 │  └─ eval.py               # 批次評估（M6）
 ├─ app.py                   # Streamlit 入口（M5）
 └─ tests/
@@ -129,7 +131,7 @@ system_prompt = """..."""                # 預設 Prompt（見 §8），首次�
    - 關鍵字分數：BM25；斷詞方式為英數字依單字、中文取相鄰兩字（bigram）；計算範圍含標題與內文。
    - 兩者各自排名後以 RRF（k = 60）合併，取前 top_k（預設 5）。
    - 關鍵字索引在記憶體中建立；資料庫 `meta.chunks_version` 在每次新增、取代、刪除、清空時加 1，版本改變時自動重建（其他程序寫入也能察覺）。
-5. **門檻（D-022）**：語意分數的最高值低於 `min_score`（預設 0.40）→ 直接回情境的拒答文字，不呼叫 LLM。門檻只擋明顯無關的問題；其餘由 LLM 依 Prompt 回答，資料沒有提到時由 LLM 說明並建議來信（D-028）。調整方式見 [03 §7](03-environment.md#7-調整拒答門檻)。
+5. **門檻（D-022）**：語意分數的最高值低於 `min_score`（預設 0.40）→ 直接回情境的拒答文字，不呼叫 LLM。門檻只擋明顯無關的問題；其餘由 LLM 依 Prompt 回答，資料沒有提到時由 LLM 說明並建議來信（D-028）。調整方式見 [03 §8](03-environment.md#8-調整拒答門檻)。
 6. **參考資料長度上限（D-024）**：依排名順序加入段落，總字數不超過 `max_context_chars`（預設 1,800）；第 1 段超過上限時截斷。
 7. 組 Prompt：
    - system：情境 Prompt（目前版本，代入變數）。
@@ -188,7 +190,7 @@ python -X utf8 -m rag_chatbot [--config 設定檔] <指令>
 ## 6. 資料結構（SQLite）
 
 ```sql
-meta(key PK, value)                       -- 例如 embed_model
+meta(key PK, value)                       -- 例如 embed_model、chunks_version
 documents(id PK, collection, filename, file_type, sha256, chunk_count, imported_at,
           UNIQUE(collection, filename))
 chunks(id PK, document_id FK, chunk_index, text, page, heading, embedding BLOB)
@@ -199,9 +201,10 @@ messages(id PK, conversation_id FK, role, content,
          prompt_version, model, sources_json, latency_ms, created_at,
          rerun_of FK NULL,                -- 重跑時指向原訊息
          kind, top_score)                 -- 回答類型、語意分數最高值（供調整門檻，schema v2）
+line_users(user_id PK, conversation_id FK NULL, last_active_at)   -- LINE 訪客對應的對話（schema v3）
 ```
 
-- 資料庫版本（`meta.schema_version`）：v1 → v2 新增 `messages.kind`、`messages.top_score`，開啟舊資料庫時自動升級。
+- 資料庫版本（`meta.schema_version`）：v1 → v2 新增 `messages.kind`、`messages.top_score`；v2 → v3 新增 `line_users`。開啟舊資料庫時自動升級。
 
 ## 7. 核心介面
 

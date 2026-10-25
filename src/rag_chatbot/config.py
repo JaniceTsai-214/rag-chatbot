@@ -49,12 +49,25 @@ class RetrievalConfig:
 
 
 @dataclass(frozen=True)
+class LineConfig:
+    profile: str = "intro"
+    port: int = 8000
+    reply_deadline_seconds: int = 50
+    conversation_idle_minutes: int = 30
+    rate_limit_count: int = 10
+    rate_limit_minutes: int = 10
+    max_queue: int = 3
+    cloudflared_path: str = ""
+
+
+@dataclass(frozen=True)
 class Config:
     default_profile: str = "intro"
     ollama: OllamaConfig = field(default_factory=OllamaConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
+    line: LineConfig = field(default_factory=LineConfig)
 
 
 def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> Config:
@@ -73,6 +86,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> Config:
         "paths": PathsConfig,
         "chunking": ChunkingConfig,
         "retrieval": RetrievalConfig,
+        "line": LineConfig,
     }
     unknown = set(data) - set(sections) - {"default_profile"}
     if unknown:
@@ -140,3 +154,10 @@ def _validate(config: Config) -> None:
         raise ConfigError("[ollama] chat_num_ctx、chat_max_tokens 必須大於 0")
     if not 0.0 <= o.chat_temperature <= 2.0:
         raise ConfigError("[ollama] chat_temperature 必須介於 0 與 2 之間")
+    line = config.line
+    if not 1 <= line.port <= 65535:
+        raise ConfigError("[line] port 必須介於 1 與 65535 之間")
+    for name in ("reply_deadline_seconds", "conversation_idle_minutes", "rate_limit_count",
+                 "rate_limit_minutes", "max_queue"):
+        if getattr(line, name) <= 0:
+            raise ConfigError(f"[line] {name} 必須大於 0")

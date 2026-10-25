@@ -131,7 +131,39 @@ python -X utf8 -m rag_chatbot chat --profile me
 
 **修改文件後**：執行 `python -X utf8 -m rag_chatbot ingest` 重新匯入，不需重新啟動任何程式。
 
-## 7. 調整拒答門檻
+## 7. LINE 機器人（M4）
+
+**第一次設定：建立 `.env`**（金鑰只放這裡，不要貼到對話或其他檔案；`.env` 不會進 Git）
+
+1. 在 VS Code 左側檔案總管，於專案根目錄（`config.toml` 旁）新增檔案，命名為 `.env`。
+2. 內容兩行（等號後面直接貼上，不加空白或引號）：
+   ```
+   LINE_CHANNEL_SECRET=貼上 Channel secret
+   LINE_CHANNEL_ACCESS_TOKEN=貼上 Channel access token
+   ```
+   - Channel secret：LINE Developers Console →「Basic settings」
+   - Channel access token：LINE Developers Console →「Messaging API」最下方
+3. 存檔。
+
+**啟動**
+
+```powershell
+cd C:\projects\rag-chatbot
+.\.venv\Scripts\Activate.ps1
+python -X utf8 -m rag_chatbot line
+```
+
+畫面依序顯示「檢查 Ollama 並載入模型…」「建立 Cloudflare 通道…」，最後出現「LINE 機器人已上線」與 Webhook 網址；之後每則問答會列一行（時間、訪客末 4 碼、類型、耗時、reply/push）。按 `Ctrl+C` 停止。
+
+**第一次啟動後（只需一次）**：若畫面提示「Use webhook 尚未開啟」，到 LINE Developers Console →「Messaging API」→「Webhook settings」打開「Use webhook」。
+
+**示範期間注意**
+
+- 筆電接上電源，Windows 電源設定改為「不進入睡眠」；終端機視窗不要關閉。
+- 停止後訪客傳訊息不會有回應；重新啟動即可（Webhook 網址會自動更新）。
+- 訪客問答與命令列相同，保存在對話紀錄（情境 `intro`）。
+
+## 8. 調整拒答門檻
 
 `min_score`（預設 0.40）：問題與最相關段落的語意分數（0～1）低於此值時，直接回拒答文字、不呼叫 LLM。它只負責擋掉明顯無關的問題；其餘能否回答由 LLM 判斷（D-022）。
 

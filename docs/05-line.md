@@ -2,7 +2,7 @@
 
 ← 回到 [主檔](00-main.md)
 
-> 狀態：設計已確認（10-25，§7 全部採用建議，D-030）。
+> 狀態：設計已確認（10-25，§7 全部採用建議，D-030）；實作完成，待功能測試（FT-23～30）。操作方式見 [03 §7](03-environment.md#7-line-機器人m4)。
 
 ## 1. 目標
 
@@ -115,6 +115,7 @@ LINE_CHANNEL_ACCESS_TOKEN=...
 | `line/users.py` | 訪客與對話對應 |
 | `line/app.py` | FastAPI `/callback` |
 | `line/runner.py` | 啟動 webhook、通道、更新 Webhook 網址 |
+| `env.py` | 讀取 `.env` |
 
 - 新增依賴：`fastapi`、`uvicorn`。不使用 `line-bot-sdk`：需要的 API 只有 5 個，自行實作較精簡、好測試。
 - 外部工具：`cloudflared`（`winget install Cloudflare.cloudflared`）。
@@ -150,4 +151,4 @@ LINE_CHANNEL_ACCESS_TOKEN=...
 - [x] 發行 Channel access token（long-lived）
 - [ ] 官方帳號後台「回應設定」：聊天關閉、自動回應訊息關閉、「加入好友的歡迎訊息」關閉（Webhook 開關需先有網址，第一次啟動後再開）
 - [x] 安裝 cloudflared（2026.10.3）
-- [ ] 實作完成後，依 [03](03-environment.md) 的說明把兩組金鑰寫入 `.env`（不要貼到對話中）
+- [ ] 依 [03 §7](03-environment.md#7-line-機器人m4) 建立 `.env`（不要貼到對話中），啟動後開啟「Use webhook」

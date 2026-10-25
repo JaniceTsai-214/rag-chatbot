@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 from collections import Counter
 from collections.abc import Callable, Sequence
 
@@ -15,6 +16,8 @@ from rag_chatbot.db import DatabaseError, connect
 from rag_chatbot.embedder import Embedder, EmbedderError, OllamaEmbedder
 from rag_chatbot.history import HistoryError
 from rag_chatbot.ingest import FileResult, IngestError, Status, ingest_collections, list_collections
+from rag_chatbot.line.api import LineApiError
+from rag_chatbot.line.runner import LineSetupError
 from rag_chatbot.llm import LLM, LLMError, OllamaLLM
 from rag_chatbot.models import ANSWERED, GREETING, REFUSED, Answer
 from rag_chatbot.profiles import ProfileError, list_profiles, load_profile
@@ -29,7 +32,7 @@ LLMFactory = Callable[[Config], LLM]
 _PREVIEW_CHARS = 80
 _EXPECTED_ERRORS = (
     ConfigError, ProfileError, DatabaseError, IngestError, EmbedderError, VectorStoreError,
-    LLMError, HistoryError, PromptError,
+    LLMError, HistoryError, PromptError, LineSetupError, LineApiError,
 )
 _KIND_LABELS = {ANSWERED: "回答", REFUSED: "拒答", GREETING: "問候"}
 _QUIT_WORDS = {"exit", "quit", "q", "離開", "結束"}
@@ -67,6 +70,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("chat", help="互動式對話（連續追問，輸入 exit 離開）")
     p.add_argument("--profile", help="情境名稱（預設為設定檔中的 default_profile）")
     p.add_argument("--sources", action="store_true", help="每則回答後列出依據")
+
+    sub.add_parser("line", help="啟動 LINE 機器人（webhook + Cloudflare 通道），Ctrl+C 停止")
     return parser
 
 
@@ -87,6 +92,10 @@ def main(
         config = load_config(args.config)
         if args.command == "profiles":
             return _cmd_profiles(config)
+        if args.command == "line":  # pragma: no cover - 以功能測試驗證
+            from rag_chatbot.line.runner import run
+
+            return run(config, Path(args.config).resolve().parent / ".env")
         conn = connect(config.paths.db)
         try:
             store = VectorStore(conn, config.ollama.embed_model)
