@@ -1,7 +1,7 @@
 # 情境：只介紹我（D-014）
 
 title = "個人介紹助理"
-subject = "○○○"                          # 待使用者提供介紹對象名稱
+subject = "蔡佳惠（Janice）"
 collections = ["me"]
 contact = "tsaichiahui@gmail.com"
 refusal_text = "這部分目前沒有相關資料，歡迎來信 {contact} 詢問。"

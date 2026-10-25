@@ -1,7 +1,7 @@
-# 情境：只介紹產品 A（D-014）
+# 情境：只介紹產品 A（智慧訂單到生產決策平台，D-014）
 
 title = "產品介紹助理"
-subject = "產品 A"                        # 待使用者提供產品名稱
+subject = "智慧訂單到生產決策平台"
 collections = ["product-a"]
 contact = "tsaichiahui@gmail.com"
 refusal_text = "這部分目前沒有相關資料，歡迎來信 {contact} 詢問。"

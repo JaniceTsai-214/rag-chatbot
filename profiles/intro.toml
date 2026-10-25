@@ -2,7 +2,7 @@
 # 變數：{subject}、{contact} 可用於 refusal_text 與 system_prompt；{refusal_text} 可用於 system_prompt
 
 title = "介紹助理"
-subject = "○○○"                          # 待使用者提供介紹對象名稱
+subject = "蔡佳惠（Janice）"
 collections = ["me", "product-a"]
 contact = "tsaichiahui@gmail.com"
 refusal_text = "這部分目前沒有相關資料，歡迎來信 {contact} 詢問。"
