@@ -45,6 +45,7 @@ class RetrievalConfig:
     top_k: int = 5
     min_score: float = 0.40
     history_turns: int = 2
+    max_context_chars: int = 1800
 
 
 @dataclass(frozen=True)
@@ -130,6 +131,8 @@ def _validate(config: Config) -> None:
         raise ConfigError("[retrieval] min_score 必須介於 0 與 1 之間")
     if r.history_turns < 0:
         raise ConfigError("[retrieval] history_turns 不可為負數")
+    if r.max_context_chars <= 0:
+        raise ConfigError("[retrieval] max_context_chars 必須大於 0")
     o = config.ollama
     if o.timeout_seconds <= 0:
         raise ConfigError("[ollama] timeout_seconds 必須大於 0")

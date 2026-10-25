@@ -15,6 +15,7 @@ from rag_chatbot.db import DatabaseError, connect
 from rag_chatbot.embedder import Embedder, EmbedderError, OllamaEmbedder
 from rag_chatbot.ingest import FileResult, IngestError, Status, ingest_collections, list_collections
 from rag_chatbot.profiles import ProfileError, list_profiles, load_profile
+from rag_chatbot.retriever import Retriever
 from rag_chatbot.vector_store import VectorStore, VectorStoreError
 
 EmbedderFactory = Callable[[Config], Embedder]
@@ -152,18 +153,19 @@ def _cmd_search(
     if missing:
         print(f"注意：文件集資料夾不存在：{', '.join(missing)}")
 
-    query = embedder.embed([question])[0]
-    results = store.search(query, profile.collections, top_k)
+    # 門檻設為 0 以列出全部結果，另外標示是否達到真正的門檻；不套用參考資料長度上限
+    result = Retriever(store, embedder).retrieve(question, profile.collections, top_k, min_score=0.0)
     print(f"情境 {profile.name}（文件集：{', '.join(profile.collections)}），門檻 {min_score:.2f}")
-    if not results:
+    if result.top_score is None:
         print("沒有任何段落")
         return 0
-    for rank, s in enumerate(results, start=1):
+    verdict = "送給模型回答" if result.top_score >= min_score else "低於門檻，會直接拒答"
+    print(f"語意最高分 {result.top_score:.4f} → {verdict}")
+    for rank, s in enumerate(result.sources, start=1):
         location = f" 第 {s.page} 頁" if s.page else ""
         heading = f" [{s.heading}]" if s.heading else ""
-        below = "  ← 低於門檻" if s.score < min_score else ""
         preview = " ".join(s.text.split())[:_PREVIEW_CHARS]
-        print(f"{rank}. {s.score:.4f}  {s.collection}/{s.filename}{location}{heading}{below}")
+        print(f"{rank}. {s.score:.4f}  {s.collection}/{s.filename}{location}{heading}")
         print(f"   {preview}")
     return 0
 

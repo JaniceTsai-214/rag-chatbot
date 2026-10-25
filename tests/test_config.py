@@ -65,6 +65,7 @@ def test_missing_file(tmp_path: Path):
         ("[ollama]\nchat_max_tokens = -1\n", "chat_max_tokens"),
         ("[ollama]\nchat_temperature = 3\n", "chat_temperature"),
         ("[ollama]\nkeep_alive = 30\n", "型別錯誤"),
+        ("[retrieval]\nmax_context_chars = 0\n", "max_context_chars"),
     ],
 )
 def test_invalid_config(write_file, content, message):

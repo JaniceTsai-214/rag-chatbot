@@ -112,12 +112,14 @@ def test_search(run, docs):
     assert code == 0
     assert "情境 intro（文件集：me, product），門檻 0.40" in out
     lines = out.splitlines()
-    assert lines[1].startswith("1. ") and "product/手冊.md [方案]" in lines[1]
-    assert lines[2].strip() == "進階版價格每月 60 元。"
-    assert "← 低於門檻" in lines[3]  # 履歷與問題無共同關鍵字
+    assert lines[1].startswith("語意最高分 ") and lines[1].endswith("→ 送給模型回答")
+    assert lines[2].startswith("1. ") and "product/手冊.md [方案]" in lines[2]
+    assert lines[3].strip() == "進階版價格每月 60 元。"
+    assert lines[4].startswith("2. ") and "me/履歷.md" in lines[4]
 
     _, out, _ = run("search", "進階版價格", "--profile", "me")
     assert "手冊" not in out and "me/履歷.md" in out
+    assert "低於門檻，會直接拒答" in out  # 履歷與問題無共同關鍵字
 
 
 def test_search_shows_page(run, project):
@@ -188,5 +190,6 @@ def test_embedder_error_class_is_reported(run, docs):
         def embed(self, texts, progress=None):
             raise EmbedderError("無法連線到 Ollama")
 
+    run("ingest")
     code, _, err = run("search", "x", embedder=Broken(model="bge-m3"))
     assert code == 1 and "錯誤：無法連線到 Ollama" in err
