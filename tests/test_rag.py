@@ -78,10 +78,13 @@ LONG_REFUSAL = "這部分目前沒有相關資料，歡迎來信 a@b.com 詢問�
 @pytest.mark.parametrize(
     "raw, expected",
     [
-        # 實測：模型改寫拒答句後半，再接著發揮
-        ("這部分目前沒有相關資料，歡迎來信 a@b.com 資訊。不過我可以提供一些背景……",
-         (REFUSED, LONG_REFUSAL)),
+        # 實測：模型先抄拒答句（後半改寫），再給出內容 → 保留內容（D-028）
+        ("這部分目前沒有相關資料，歡迎來信 a@b.com 資訊。不過我可以提供一些背景。",
+         (ANSWERED, "不過我可以提供一些背景。")),
+        (f"{LONG_REFUSAL}根據介紹，系統可對接 SAP、鼎新 [1]。",
+         (ANSWERED, "根據介紹，系統可對接 SAP、鼎新 [1]。")),
         ("「這部分目前沒有相關資料」", (REFUSED, LONG_REFUSAL)),
+        ("這部分目前沒有相關資料，歡迎來信 a@b.com 資訊。", (REFUSED, LONG_REFUSAL)),
         ("支援 SAP、鼎新 [1]。這部分目前沒有相關資料，請洽詢。其他系統需確認。",
          (ANSWERED, "支援 SAP、鼎新 [1]。其他系統需確認。")),
         ("支援 SAP [1]。\n這部分目前沒有相關資料", (ANSWERED, "支援 SAP [1]。")),

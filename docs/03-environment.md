@@ -64,7 +64,7 @@ python -X utf8 -m rag_chatbot chat --sources                # 互動式連續提
 pytest                                                      # 單元測試
 pytest --cov=rag_chatbot                                    # 含覆蓋率
 
-streamlit run app.py                                        # 管理介面（M4 起）
+streamlit run app.py                                        # 管理介面（M5 起）
 python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 起）
 ```
 
@@ -87,12 +87,13 @@ python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 
 | bge-m3 embedding（約 600 字/段，2026-10-25） | 約 0.9 秒/段；每批 1 筆或 16 筆速度相同；1,000 段約 15 分鐘 |
 | 向量搜尋（1 萬段 × 1024 維，2026-10-25） | 約 100 ms（含從 SQLite 讀取）；資料庫約 62 MB |
 | 真實文件 RAG 回答（M3 規劃前，2026-10-25） | 送入約 2,000 字參考資料：讀入 1,962 tokens／36 秒（約 54 tok/s）+ 產生 199 tokens／25 秒，**共 70 秒（超過 N-02）**；拒答時約 26 秒 → M3 以參考資料上限、回答長度上限、keep_alive 改善（D-024） |
+| M3 完成後回答時間（2026-10-25） | 測試資料 7.6～15.9 秒；真實文件 14～24 秒；問候 0 秒（符合 N-02） |
 
 觀察：
 - 回答內容正確，但模型未照指示標註 `[n]`（→ D-010）。
 - CPU 上分批送出不會加速；`OllamaEmbedder` 仍每批 16 筆，用於回報匯入進度。
 
-## 6. 提問測試（命令列，M3 起；網頁介面於 M4 提供）
+## 6. 提問測試（命令列，M3 起；網頁介面於 M5 提供）
 
 **事前準備**：Ollama 在執行中（工作列有 Ollama 圖示；或執行 `ollama list` 有回應）、筆電接上電源。
 
@@ -146,7 +147,7 @@ python -X utf8 -m rag_chatbot chat --profile me
 **調整步驟**
 
 1. 收集「應該回答」與「應該拒答」的問題各數題。
-2. 以 `python -X utf8 -m rag_chatbot search "問題"` 查看每題第 1 名的分數（`ask`／`chat` 的回答開頭也會顯示；M4 起管理介面也會顯示）。
+2. 以 `python -X utf8 -m rag_chatbot search "問題"` 查看每題第 1 名的分數（`ask`／`chat` 的回答開頭也會顯示；M5 起管理介面也會顯示）。
 3. 把門檻設在兩組分數之間：修改 `config.toml` 的 `[retrieval] min_score`；只想調整某個情境時，在 `profiles/<情境>.toml` 加 `min_score = 0.42`。不需改程式、不需重新匯入。
 4. 驗證：重跑這些問題（M6 起可用批次評估整批重跑），確認沒有讓其他題目變差。
 5. 在 [04 §4](04-testing.md#4-執行紀錄) 記錄調整前後的分數與理由。

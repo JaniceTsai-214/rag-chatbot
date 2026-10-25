@@ -144,20 +144,18 @@ _SENTENCE_END = "。！？!?\n"
 
 
 def postprocess(raw: str, refusal_text: str) -> tuple[str, str]:
-    """拒答句的後處理（D-022）：
-    - 只有拒答句，或回答一開頭就是拒答句（模型常改寫後半句再接著發揮）→ 拒答，改回標準拒答文字。
-    - 有內容又附上拒答句 → 刪除該句。
+    """拒答句的後處理（D-022、D-028）：
+    - 只有拒答句 → 拒答，改回標準拒答文字。
+    - 拒答句之外還有內容（不論在前或在後）→ 刪除拒答句、保留內容。
+      實測模型會先抄一句拒答句，再給出正確答案；整段當成拒答會丟掉正確答案。
     拒答句以完整文字比對，也以開頭片段（第一個「，」或「。」之前）比對改寫過的版本。
     處理前先把含簡體字的句子轉成繁體（D-027）。
     """
     text = to_traditional(raw.strip())
     text = text.replace(f"「{refusal_text}」", refusal_text)
     core = _refusal_core(refusal_text)
-    position = text.find(core)
-    if position == -1:
+    if core not in text:
         return ANSWERED, text
-    if not _has_words(text[:position]):
-        return REFUSED, refusal_text
 
     remainder = text.replace(refusal_text, "")
     while (position := remainder.find(core)) != -1:  # 改寫過的拒答句：刪除所在的整句
