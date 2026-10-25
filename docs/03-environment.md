@@ -97,8 +97,7 @@ python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 
 **事前準備**：Ollama 在執行中（工作列有 Ollama 圖示；或執行 `ollama list` 有回應）、筆電接上電源。
 
 ```powershell
-cd C:\projects
-ag-chatbot
+cd C:\projects\rag-chatbot
 .\.venv\Scripts\Activate.ps1
 
 # 方式一：互動式對話（建議）——同一個對話中連續追問
