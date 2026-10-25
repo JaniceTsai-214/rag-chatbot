@@ -101,9 +101,34 @@ def test_profile_not_found(config, write_profile):
         (VALID + "top_k = true\n", "top_k"),
         (VALID + "min_score = 'x'\n", "min_score 必須是數字"),
         (VALID + "min_score = 2.0\n", "介於 0 與 1"),
+        (VALID + 'greeting_text = " "\n', "greeting_text 必須是非空字串"),
     ],
 )
 def test_invalid_profile(config, write_profile, content, message):
     write_profile("bad", content)
     with pytest.raises(ProfileError, match=message):
         load_profile(config, "bad")
+
+
+def test_reply_texts_default_and_custom(config, write_profile):
+    write_profile("plain", VALID)
+    plain = load_profile(config, "plain")
+    assert plain.greeting_text == "您好，我是王小明的測試助理，歡迎詢問相關問題。"
+    assert plain.thanks_text == "不客氣！還有其他想了解的嗎？"
+    assert plain.farewell_text == "謝謝您的詢問，祝您有美好的一天！"
+
+    custom = VALID + (
+        'greeting_text = """\n嗨，我是{subject}的{title}，聯絡 {contact}\n"""\n'
+        'thanks_text = "不會"\nfarewell_text = "再會"\n'
+    )
+    write_profile("custom", custom)
+    profile = load_profile(config, "custom")
+    assert profile.greeting_text == "嗨，我是王小明的測試助理，聯絡 test@example.com"
+    assert (profile.thanks_text, profile.farewell_text) == ("不會", "再會")
+
+
+def test_project_profiles_have_greetings():
+    config = load_config(PROJECT_ROOT / "config.toml")
+    for profile in list_profiles(config):
+        assert "{" not in profile.greeting_text
+        assert profile.greeting_text.startswith("您好！")

@@ -9,7 +9,11 @@ from pathlib import Path
 from rag_chatbot.config import Config
 
 _REQUIRED = ("title", "subject", "collections", "contact", "refusal_text", "system_prompt")
-_OPTIONAL = ("top_k", "min_score")
+_OPTIONAL = ("top_k", "min_score", "greeting_text", "thanks_text", "farewell_text")
+
+DEFAULT_GREETING = "您好，我是{subject}的{title}，歡迎詢問相關問題。"
+DEFAULT_THANKS = "不客氣！還有其他想了解的嗎？"
+DEFAULT_FAREWELL = "謝謝您的詢問，祝您有美好的一天！"
 
 
 class ProfileError(Exception):
@@ -27,11 +31,30 @@ class Profile:
     system_prompt: str  # 預設 Prompt 範本（含變數），首次使用時存為 v1
     top_k: int | None = None
     min_score: float | None = None
+    greeting_text_template: str = DEFAULT_GREETING
+    thanks_text_template: str = DEFAULT_THANKS
+    farewell_text_template: str = DEFAULT_FAREWELL
 
     @property
     def refusal_text(self) -> str:
         """代入變數後的拒答文字。"""
-        return _substitute(self.refusal_text_template, subject=self.subject, contact=self.contact)
+        return self._fill(self.refusal_text_template)
+
+    @property
+    def greeting_text(self) -> str:
+        """問候、詢問身分、套話時的回覆。"""
+        return self._fill(self.greeting_text_template)
+
+    @property
+    def thanks_text(self) -> str:
+        return self._fill(self.thanks_text_template)
+
+    @property
+    def farewell_text(self) -> str:
+        return self._fill(self.farewell_text_template)
+
+    def _fill(self, template: str) -> str:
+        return _substitute(template, subject=self.subject, contact=self.contact, title=self.title)
 
     def render_prompt(self, template: str | None = None) -> str:
         """將 Prompt 範本代入變數；未指定範本時使用情境預設 Prompt。"""
@@ -92,8 +115,9 @@ def _load_file(path: Path) -> Profile:
     if unknown:
         raise ProfileError(f"情境「{name}」有未知的項目：{', '.join(sorted(unknown))}")
 
-    for key in ("title", "subject", "contact", "refusal_text", "system_prompt"):
-        if not isinstance(data[key], str) or not data[key].strip():
+    for key in ("title", "subject", "contact", "refusal_text", "system_prompt",
+                "greeting_text", "thanks_text", "farewell_text"):
+        if key in data and (not isinstance(data[key], str) or not data[key].strip()):
             raise ProfileError(f"情境「{name}」的 {key} 必須是非空字串")
 
     collections = data["collections"]
@@ -128,4 +152,7 @@ def _load_file(path: Path) -> Profile:
         system_prompt=data["system_prompt"],
         top_k=top_k,
         min_score=min_score,
+        greeting_text_template=data.get("greeting_text", DEFAULT_GREETING).strip(),
+        thanks_text_template=data.get("thanks_text", DEFAULT_THANKS).strip(),
+        farewell_text_template=data.get("farewell_text", DEFAULT_FAREWELL).strip(),
     )
