@@ -46,13 +46,60 @@ class Task:
     text: str = ""
 
 
+PARAGRAPH_CHARS = 70  # 長段落拆開時，每段約多少字（至少一句）
+_BULLET = re.compile(r"^\s*[-*•・●▪]\s+")
+_NUMBERED = re.compile(r"^\s*\d+[.、．)]\s*")
+_SENTENCE = re.compile(r"[^。！？!?]*[。！？!?]+|[^。！？!?]+$")
+
+
 def format_for_line(text: str) -> str:
-    """移除 [1]、[1][2]、[1]、[3] 等引用標記（LINE 不顯示依據，L-07），並整理多餘空白。"""
-    text = re.sub(r"\[\d+\](?:\s*[、,，]?\s*\[\d+\])*", "", text)
+    """整理成適合手機閱讀的純文字（LINE 不支援 Markdown，L-07）：
+    移除引用標記與 Markdown 符號、條列改用「•」、長段落拆成 1～2 句一段、段落與條列間空一行。
+    """
+    text = re.sub(r"\[\d+\](?:\s*[、,，]?\s*\[\d+\])*", "", text)  # [1]、[1][2]、[1]、[3]
+    text = re.sub(r"\*\*(.+?)\*\*|__(.+?)__", lambda m: m.group(1) or m.group(2), text)
+    text = text.replace("`", "")
     text = re.sub(r"[ \t]+([。，、！？；：）」])", r"\1", text)
     text = re.sub(r"[ \t]{2,}", " ", text)
-    text = "\n".join(line.rstrip() for line in text.split("\n"))
-    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+    blocks: list[list[str]] = []  # 每個 block 的行連在一起顯示，block 之間空一行
+    previous_was_item = False
+    for raw in text.split("\n"):
+        line = raw.strip()
+        if not line:
+            continue  # 空行不打斷條列：原文條列項目間有空行時仍合併為同一組
+        heading = re.match(r"^#{1,6}\s*(.+)$", line)
+        if heading:
+            blocks.append([f"【{heading.group(1).strip()}】"])
+            previous_was_item = False
+            continue
+        is_item = bool(_BULLET.match(line) or _NUMBERED.match(line))
+        if is_item:
+            line = _BULLET.sub("• ", line)
+            if previous_was_item or (blocks and blocks[-1][-1].endswith(("：", ":"))):
+                blocks[-1].append(line)  # 接在前一個條列或「…如下：」之後，不空行
+            else:
+                blocks.append([line])
+        else:
+            blocks.extend([p] for p in _split_paragraph(line))
+        previous_was_item = is_item
+    return "\n\n".join("\n".join(block) for block in blocks)
+
+
+def _split_paragraph(line: str) -> list[str]:
+    """長段落依句號拆開，每段累積到約 PARAGRAPH_CHARS 字為止。"""
+    if len(line) <= PARAGRAPH_CHARS:
+        return [line]
+    paragraphs, current = [], ""
+    for sentence in (s.strip() for s in _SENTENCE.findall(line)):
+        if current and len(current) + len(sentence) > PARAGRAPH_CHARS:
+            paragraphs.append(current)
+            current = sentence
+        else:
+            current += sentence
+    if current:
+        paragraphs.append(current)
+    return paragraphs
 
 
 class LineBot:
