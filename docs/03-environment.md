@@ -41,7 +41,7 @@ ollama pull qwen2.5:3b
 ollama pull bge-m3
 
 # 4. Python 虛擬環境與套件
-cd C:\projects\rag-chatbot
+cd C:\MyProjects\rag-chatbot
 py -3.13 -m venv .venv
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 
@@ -49,11 +49,11 @@ py -3.13 -m venv .venv
 .venv\Scripts\python.exe -X utf8 -m rag_chatbot ingest
 ```
 
-另需建立 `.env`（LINE 金鑰，見 §7）。`data\`、`.env` 不在 Git 中，換電腦時需自行備份與複製。
+另需建立 `.env`（LINE 金鑰，見 §7）。`data\`、`.env` 不在 Git 中，換電腦時需自行備份與複製；備份放在 `E:\MyProjects\rag-chatbot`（D-031）。
 
 ## 4. 常用指令
 
-所有指令都在專案資料夾執行（`cd C:\projects\rag-chatbot`），開頭一律是 `.venv\Scripts\python.exe`：命令提示字元（cmd）與 PowerShell 皆適用，不需先啟動虛擬環境。
+所有指令都在專案資料夾執行（`cd C:\MyProjects\rag-chatbot`），開頭一律是 `.venv\Scripts\python.exe`：命令提示字元（cmd）與 PowerShell 皆適用，不需先啟動虛擬環境。
 
 ```powershell
 # 命令列工具（完整說明見 02 §4.4）
@@ -102,7 +102,7 @@ py -3.13 -m venv .venv
 **事前準備**：Ollama 在執行中（工作列有 Ollama 圖示；或執行 `ollama list` 有回應）、筆電接上電源。
 
 ```powershell
-cd C:\projects\rag-chatbot
+cd C:\MyProjects\rag-chatbot
 
 # 方式一：互動式對話（建議）——同一個對話中連續追問
 .venv\Scripts\python.exe -X utf8 -m rag_chatbot chat --sources
@@ -164,7 +164,7 @@ cd C:\projects\rag-chatbot
 | 6 | 用手機傳「你好」給官方帳號 | 立即收到問候文字；終端機出現一行紀錄 |
 
 ```powershell
-cd C:\projects\rag-chatbot
+cd C:\MyProjects\rag-chatbot
 .venv\Scripts\python.exe -X utf8 -m rag_chatbot line
 ```
 
