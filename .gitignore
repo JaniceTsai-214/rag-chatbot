@@ -18,3 +18,4 @@ eval/reports/
 
 # LINE 金鑰等機密資料（不進版本控制）
 line_*.txt
+*.env

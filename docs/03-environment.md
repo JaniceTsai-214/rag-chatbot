@@ -135,7 +135,7 @@ python -X utf8 -m rag_chatbot chat --profile me
 
 **第一次設定：建立 `.env`**（金鑰只放這裡，不要貼到對話或其他檔案；`.env` 不會進 Git）
 
-1. 在 VS Code 左側檔案總管，於專案根目錄（`config.toml` 旁）新增檔案，命名為 `.env`。
+1. 在 VS Code 左側檔案總管，於專案根目錄（`config.toml` 旁）新增檔案，檔名**就是 `.env`**（前面不加任何文字，其他檔名讀不到）。
 2. 內容兩行（等號後面直接貼上，不加空白或引號）：
    ```
    LINE_CHANNEL_SECRET=貼上 Channel secret
@@ -149,9 +149,10 @@ python -X utf8 -m rag_chatbot chat --profile me
 
 ```powershell
 cd C:\projects\rag-chatbot
-.\.venv\Scripts\Activate.ps1
-python -X utf8 -m rag_chatbot line
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot line
 ```
+
+> 命令提示字元（cmd）與 PowerShell 都適用：直接指定 `.venv\Scripts\python.exe`，不需先啟動虛擬環境。若出現「No module named rag_chatbot」，表示用到了系統的 Python，請確認指令開頭是 `.venv\Scripts\python.exe`。
 
 畫面依序顯示「檢查 Ollama 並載入模型…」「建立 Cloudflare 通道…」，最後出現「LINE 機器人已上線」與 Webhook 網址；之後每則問答會列一行（時間、訪客末 4 碼、類型、耗時、reply/push）。按 `Ctrl+C` 停止。
 

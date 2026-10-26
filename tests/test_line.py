@@ -427,3 +427,41 @@ def test_wait_for_tunnel_url():
     ticks = itertools.count(0, 100)
     with pytest.raises(LineSetupError):
         wait_for_tunnel_url(iter(["a", "b", "https://x.trycloudflare.com"]), timeout=150, clock=lambda: next(ticks))
+
+
+def test_wait_until_reachable():
+    from rag_chatbot.line.runner import wait_until_reachable
+
+    responses = iter([ConnectionError("dns"), 502, 200])
+
+    def get(url):
+        result = next(responses)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    sleeps = []
+    wait_until_reachable("https://x/health", get, timeout=60, clock=lambda: 0, sleep=sleeps.append)
+    assert len(sleeps) == 2
+
+    ticks = itertools.count(0, 50)
+    with pytest.raises(LineSetupError, match="無法連線"):
+        wait_until_reachable("https://x/health", lambda u: 502, timeout=100, clock=lambda: next(ticks), sleep=lambda s: None)
+
+
+def test_retry():
+    from rag_chatbot.line.runner import retry
+
+    calls = {"n": 0}
+
+    def flaky():
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise LineApiError(400, "Invalid webhook endpoint URL")
+        return "ok"
+
+    sleeps = []
+    assert retry(flaky, attempts=5, interval=5, sleep=sleeps.append) == "ok"
+    assert sleeps == [5, 5]
+    with pytest.raises(LineApiError):
+        retry(lambda: (_ for _ in ()).throw(LineApiError(400, "x")), attempts=2, interval=1, sleep=lambda s: None)
