@@ -30,6 +30,7 @@
 # 1. 安裝工具（Git 會跳出 UAC，需按「是」）
 winget install Ollama.Ollama
 winget install Git.Git
+winget install Cloudflare.cloudflared          # LINE 機器人的 HTTPS 通道（M4）
 
 # 2. Git 作者資訊（新開終端機視窗後執行一次）
 git config --global user.name "你的名字"
@@ -39,36 +40,39 @@ git config --global user.email "you@example.com"
 ollama pull qwen2.5:3b
 ollama pull bge-m3
 
-# 4. Python 虛擬環境
+# 4. Python 虛擬環境與套件
 cd C:\projects\rag-chatbot
 py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
+.venv\Scripts\python.exe -m pip install -e ".[dev]"
+
+# 5. 匯入文件（文件放在 data\collections\，見 §4）
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot ingest
 ```
+
+另需建立 `.env`（LINE 金鑰，見 §7）。`data\`、`.env` 不在 Git 中，換電腦時需自行備份與複製。
 
 ## 4. 常用指令
 
-```powershell
-.\.venv\Scripts\Activate.ps1
+所有指令都在專案資料夾執行（`cd C:\projects\rag-chatbot`），開頭一律是 `.venv\Scripts\python.exe`：命令提示字元（cmd）與 PowerShell 皆適用，不需先啟動虛擬環境。
 
-# 命令列工具（M2 起；完整說明見 02 §4.4）
-python -X utf8 -m rag_chatbot profiles                      # 列出情境
-python -X utf8 -m rag_chatbot ingest                        # 匯入 data\collections\ 下全部文件集
-python -X utf8 -m rag_chatbot list                          # 列出已匯入文件
-python -X utf8 -m rag_chatbot search "問題" --profile intro  # 檢視檢索結果與分數
-python -X utf8 -m rag_chatbot delete me 履歷.docx            # 刪除文件
-python -X utf8 -m rag_chatbot ask "問題" --profile intro     # 提問一題（M3 起）
-python -X utf8 -m rag_chatbot chat --sources                # 互動式連續提問（M3 起）
+```powershell
+# 命令列工具（完整說明見 02 §4.4）
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot profiles                      # 列出情境
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot ingest                        # 匯入 data\collections\ 下全部文件集
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot list                          # 列出已匯入文件
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot search "問題" --profile intro  # 檢視檢索結果與分數
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot delete me 履歷.docx            # 刪除文件
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot ask "問題" --profile intro     # 提問一題
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot chat --sources                # 互動式連續提問
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot line                          # 啟動 LINE 機器人（§7）
 
 # 測試
-pytest                                                      # 單元測試
-pytest --cov=rag_chatbot                                    # 含覆蓋率
-
-streamlit run app.py                                        # 管理介面（M5 起）
-python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 起）
+.venv\Scripts\python.exe -m pytest                                            # 單元測試
+.venv\Scripts\python.exe -m pytest --cov=rag_chatbot                          # 含覆蓋率
 ```
 
-> Windows 主控台預設 Big5（cp950），命令列輸出中文需加 `-X utf8`。
+> - 出現「No module named rag_chatbot」：用到了系統的 Python，請確認指令開頭是 `.venv\Scripts\python.exe`。
+> - `-X utf8`：Windows 主控台預設 Big5（cp950），加上它中文才能正確顯示。
 
 **放置文件**：把文件放進 `data\collections\<文件集>\`（例如 `data\collections\me\`），再執行 `ingest`。文件集內容視為可公開（N-06）。
 
@@ -99,10 +103,9 @@ python -X utf8 -m rag_chatbot.eval eval\questions.csv       # 批次評估（M6 
 
 ```powershell
 cd C:\projects\rag-chatbot
-.\.venv\Scripts\Activate.ps1
 
 # 方式一：互動式對話（建議）——同一個對話中連續追問
-python -X utf8 -m rag_chatbot chat --sources
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot chat --sources
 #   您：她管理過多大的團隊？
 #   [回答｜18.2 秒｜Prompt v1｜語意最高分 0.641]
 #   ……回答內容……
@@ -111,11 +114,11 @@ python -X utf8 -m rag_chatbot chat --sources
 #   您：exit            ← 輸入 exit 或直接按 Enter 離開
 
 # 方式二：一次問一題
-python -X utf8 -m rag_chatbot ask "智慧訂單可以接哪些 ERP？"
-python -X utf8 -m rag_chatbot ask "那導入要多久？" --conversation 3   # 接續對話 #3 追問
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot ask "智慧訂單可以接哪些 ERP？"
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot ask "那導入要多久？" --conversation 3   # 接續對話 #3 追問
 
 # 指定情境（預設 intro）
-python -X utf8 -m rag_chatbot chat --profile me
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot chat --profile me
 ```
 
 **看懂回答開頭的標示**
@@ -129,7 +132,9 @@ python -X utf8 -m rag_chatbot chat --profile me
 
 **測試時建議記錄**：答錯（內容與文件不符）、不該拒答卻拒答、該拒答卻回答、回答超過 60 秒的題目，連同畫面上的標示一起記下，供調整 Prompt、門檻或補充 FAQ。所有問答也都保存在資料庫的對話紀錄中。
 
-**修改文件後**：執行 `python -X utf8 -m rag_chatbot ingest` 重新匯入，不需重新啟動任何程式。
+**修改文件後**：執行 `.venv\Scripts\python.exe -X utf8 -m rag_chatbot ingest` 重新匯入。命令列與 LINE 機器人都不需重新啟動（下一題起自動使用新內容）。
+
+**修改情境設定（`profiles\*.toml`、`config.toml`）後**：LINE 機器人需重新啟動（Ctrl+C 後再執行）。`system_prompt` 的修改不影響已存入資料庫的 Prompt 版本（見 02 §8）。
 
 ## 7. LINE 機器人（M4）
 
@@ -145,23 +150,59 @@ python -X utf8 -m rag_chatbot chat --profile me
    - Channel access token：LINE Developers Console →「Messaging API」最下方
 3. 存檔。
 
-**啟動**
+**第一次啟動後（只需一次）**：若畫面提示「Use webhook 尚未開啟」，到 LINE Developers Console →「Messaging API」→「Webhook settings」打開「Use webhook」（與官方帳號後台「回應設定」的 Webhook 開關是同一設定）。
+
+### 7.1 每次啟動（含重新開機後）
+
+| 步驟 | 操作 | 確認 |
+|---|---|---|
+| 1 | 筆電接上電源 | — |
+| 2 | 確認 Ollama 在執行：登入 Windows 後會自動啟動（啟動資料夾中有 `Ollama.lnk`） | 工作列右下角有 Ollama 圖示；沒有時從「開始」選單開啟 Ollama |
+| 3 | 開啟終端機（命令提示字元、PowerShell，或 VS Code 的終端機皆可） | — |
+| 4 | 輸入下方兩行指令 | — |
+| 5 | 等待約 1 分鐘 | 出現「LINE 機器人已上線」與「連線測試：成功」 |
+| 6 | 用手機傳「你好」給官方帳號 | 立即收到問候文字；終端機出現一行紀錄 |
 
 ```powershell
 cd C:\projects\rag-chatbot
 .venv\Scripts\python.exe -X utf8 -m rag_chatbot line
 ```
 
-> 命令提示字元（cmd）與 PowerShell 都適用：直接指定 `.venv\Scripts\python.exe`，不需先啟動虛擬環境。若出現「No module named rag_chatbot」，表示用到了系統的 Python，請確認指令開頭是 `.venv\Scripts\python.exe`。
+啟動過程依序顯示：
 
-畫面依序顯示「檢查 Ollama 並載入模型…」「建立 Cloudflare 通道…」，最後出現「LINE 機器人已上線」與 Webhook 網址；之後每則問答會列一行（時間、訪客末 4 碼、類型、耗時、reply/push）。按 `Ctrl+C` 停止。
+```
+檢查 Ollama 並載入模型…
+建立 Cloudflare 通道…
+等待通道網址生效：https://xxxx.trycloudflare.com
+LINE 機器人已上線（情境 intro）
+Webhook 網址：https://xxxx.trycloudflare.com/callback
+連線測試：成功
+按 Ctrl+C 停止。
+```
 
-**第一次啟動後（只需一次）**：若畫面提示「Use webhook 尚未開啟」，到 LINE Developers Console →「Messaging API」→「Webhook settings」打開「Use webhook」。
+之後每則問答列一行，例如 `21:05:12 訪客…a1b2 answered 18.3 秒 reply｜她管理過多大的團隊？`（時間、訪客 ID 末 4 碼、類型、耗時、reply／push、問題前 30 字）。
 
-**示範期間注意**
+**停止**：在終端機按 `Ctrl+C`。停止後訪客傳訊息不會有回應；再次執行即可恢復（Webhook 網址每次不同，會自動更新，不需到後台設定）。
 
-- 筆電接上電源，Windows 電源設定改為「不進入睡眠」；終端機視窗不要關閉。
-- 停止後訪客傳訊息不會有回應；重新啟動即可（Webhook 網址會自動更新）。
+### 7.2 常見狀況
+
+| 畫面訊息 | 原因與處理 |
+|---|---|
+| `No module named rag_chatbot` | 用到系統的 Python；指令開頭須為 `.venv\Scripts\python.exe` |
+| `.env 缺少 LINE_CHANNEL_SECRET…` | `.env` 不存在、檔名不對，或內容少一行（見上方「第一次設定」） |
+| `無法連線到 Ollama` | Ollama 未執行：從「開始」選單開啟 Ollama 後重試 |
+| `找不到 cloudflared` | 執行 `winget install Cloudflare.cloudflared` |
+| `通道網址在 120 秒內無法連線`、`無法建立 Cloudflare 通道` | 網路不穩或 Cloudflare 暫時異常；確認網路後重試 |
+| `LINE API 錯誤 401` | access token 錯誤或已重新發行：更新 `.env` 後重試 |
+| `連線測試：失敗` | 新網址尚未生效；通常稍後即正常，可傳訊息測試，仍無回應則重新啟動 |
+| 「注意：LINE 的『Use webhook』尚未開啟」 | 到 Developers Console 打開「Use webhook」（只需一次） |
+| `Cloudflare 通道已中斷，請重新啟動。` | 通道斷線（網路中斷、筆電睡眠）；重新執行啟動指令 |
+
+### 7.3 示範期間注意
+
+- Windows 電源設定改為「接上電源時不進入睡眠」；闔上螢幕不睡眠（設定 → 系統 → 電源）。
+- 終端機視窗不要關閉；可以縮小。
+- 回答時間約 15～25 秒；同時有多人提問時依序回答，後面的人會等比較久。
 - 訪客問答與命令列相同，保存在對話紀錄（情境 `intro`）。
 
 ## 8. 調整拒答門檻
@@ -180,7 +221,7 @@ cd C:\projects\rag-chatbot
 **調整步驟**
 
 1. 收集「應該回答」與「應該拒答」的問題各數題。
-2. 以 `python -X utf8 -m rag_chatbot search "問題"` 查看每題第 1 名的分數（`ask`／`chat` 的回答開頭也會顯示；M5 起管理介面也會顯示）。
+2. 以 `.venv\Scripts\python.exe -X utf8 -m rag_chatbot search "問題"` 查看每題第 1 名的分數（`ask`／`chat` 的回答開頭也會顯示；M5 起管理介面也會顯示）。
 3. 把門檻設在兩組分數之間：修改 `config.toml` 的 `[retrieval] min_score`；只想調整某個情境時，在 `profiles/<情境>.toml` 加 `min_score = 0.42`。不需改程式、不需重新匯入。
 4. 驗證：重跑這些問題（M6 起可用批次評估整批重跑），確認沒有讓其他題目變差。
 5. 在 [04 §4](04-testing.md#4-執行紀錄) 記錄調整前後的分數與理由。

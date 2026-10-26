@@ -63,10 +63,10 @@ tests/functional/
 | `小算盤FAQ.csv` | 5 筆問答（例如「可以多人共用帳本嗎？」→「進階版支援最多 5 人共用」） |
 
 ### 2.2 執行方式
-1. 測試文件已在 Git 中；修改內容時才需重跑 `python tests/functional/make_testdata.py --force`（不加 `--force` 時不覆寫已存在的檔案，因為 DOCX 每次產生的 hash 都不同）。
+1. 測試文件已在 Git 中；修改內容時才需重跑 `.venv\Scripts\python.exe -X utf8 tests\functional\make_testdata.py --force`（不加 `--force` 時不覆寫已存在的檔案，因為 DOCX 每次產生的 hash 都不同）。
 2. 每個里程碑的功能測試都從乾淨狀態開始：刪除 `tests/functional/app.db`，再執行 `ingest`。
 3. 一律指定測試設定：
-   - M2、M3：`python -X utf8 -m rag_chatbot --config tests/functional/config.toml <指令>`
+   - M2、M3：`.venv\Scripts\python.exe -X utf8 -m rag_chatbot --config tests\functional\config.toml <指令>`
    - M5：`streamlit run app.py -- --config tests/functional/config.toml`
 4. 依第 3 節逐項操作，將結果填入第 4 節「執行紀錄」：通過 / 不通過 / 備註（含回答時間）。
 5. FT-03 會修改 `作品集.md`，測完以 `git checkout tests/functional/collections/me/作品集.md` 還原。

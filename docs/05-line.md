@@ -71,7 +71,7 @@
 
 ### 4.4 啟動與通道
 ```powershell
-python -X utf8 -m rag_chatbot line          # 啟動 LINE 機器人，Ctrl+C 停止
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot line          # 啟動 LINE 機器人，Ctrl+C 停止（操作見 03 §7）
 ```
 1. 讀取 `.env` 的金鑰，檢查 Ollama 與模型。
 2. 啟動 webhook（`127.0.0.1:8000`）。

@@ -150,7 +150,7 @@ system_prompt = """..."""                # 預設 Prompt（見 §8），首次�
 ### 4.4 命令列工具
 
 ```
-python -X utf8 -m rag_chatbot [--config 設定檔] <指令>
+.venv\Scripts\python.exe -X utf8 -m rag_chatbot [--config 設定檔] <指令>
 
   profiles                          列出情境與其文件集
   ingest [文件集] [--rebuild]        匯入全部或指定文件集（新增／跳過／取代，顯示進度）；
